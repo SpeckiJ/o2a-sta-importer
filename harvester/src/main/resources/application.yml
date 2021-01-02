@@ -1,0 +1,16 @@
+
+spring:
+  codec:
+    max-in-memory-size: 100MB
+  main:
+    web-environment: false
+
+server:
+  port: ${random.int(5010,5100)}
+
+logging:
+  level:
+    reactor:
+      netty:
+        http:
+#          client: DEBUG
