@@ -39,6 +39,7 @@ import org.n52.sta.awiingestor.model.sta.Sensor;
 import org.n52.sta.awiingestor.model.sta.Thing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -59,9 +60,9 @@ public class StaAPI {
 
     private WebClient client;
 
-    public StaAPI(ObjectMapper mapper) {
+    public StaAPI(ObjectMapper mapper, @Value("${server.config.staURL}") String staURL) {
         client = WebClient.builder()
-            .baseUrl(APIConfig.STA_API_ROOT)
+            .baseUrl(staURL)
             .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
             .codecs(clientCodecConfigurer -> {
                 clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);

@@ -52,6 +52,7 @@ import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -91,7 +92,7 @@ public class O2AHarvesterJob implements Job {
                 .forEach(p -> staAPI.postThing(STATransformer.toSTAThing(p)));
 
             // Get all Sensors connected to moses project
-            O2ASensor[] sensors = dataAPI.getSensors("*vessel:prandtl_hzg*");
+            O2ASensor[] sensors = dataAPI.getSensors("*vessel:litto*");
 
             for (int i = 2, sensorsLength = sensors.length; i < sensorsLength; i++) {
                 O2ASensor o2aSensor = sensors[i];
