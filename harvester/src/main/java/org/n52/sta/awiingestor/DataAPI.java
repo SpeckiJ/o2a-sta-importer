@@ -31,9 +31,9 @@ package org.n52.sta.awiingestor;
 
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import io.github.resilience4j.reactor.ratelimiter.operator.RateLimiterOperator;
-import org.n52.sta.awiingestor.model.awi.AWIData;
 import org.n52.sta.awiingestor.model.awi.AWIDataset;
 import org.n52.sta.awiingestor.model.awi.AWISensorMetadata;
+import org.n52.sta.awiingestor.model.awi.O2AData;
 import org.n52.sta.awiingestor.model.awi.O2APlatform;
 import org.n52.sta.awiingestor.model.awi.O2ASensor;
 import org.springframework.http.HttpHeaders;
@@ -131,19 +131,19 @@ public class DataAPI {
             .block();
     }
 
-    public AWIData[] getData(String sensor, String dataset) {
+    public O2AData getData(String sensor, String dataset) {
         return client.get()
             .uri(uriBuilder -> uriBuilder
                 .path("/data")
                 .queryParam("sensors", sensor)
                 .queryParam("format", MediaType.APPLICATION_JSON_VALUE)
-                .queryParam("streamit", true)
+                .queryParam("streamit", false)
                 .queryParam("withQualityFlags", false)
                 .queryParam("datasetIds", dataset)
                 .queryParam("withLogicalCode", false)
                 .build())
             .retrieve()
-            .bodyToMono(AWIData[].class)
+            .bodyToMono(O2AData.class)
             .transformDeferred(RateLimiterOperator.of(
                 rateLimiterRegistry.rateLimiter(APIConfig.DATA_API_RATELIMIT_NAME)))
             .block();

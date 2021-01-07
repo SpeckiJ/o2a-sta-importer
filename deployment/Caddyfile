@@ -1,0 +1,13 @@
+http://ufz.demo.52north.org {
+    reverse_proxy /dashboard/* grafana:3000
+    reverse_proxy /sta/* sta:8081
+}
+
+http://localhost {
+    proxy /dashboard/* grafana:3000 {
+        transparent
+        websocket
+    }
+    
+    reverse_proxy /sta/* sta:8081
+}

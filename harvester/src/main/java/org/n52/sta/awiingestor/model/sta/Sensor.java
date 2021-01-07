@@ -1,6 +1,7 @@
 package org.n52.sta.awiingestor.model.sta;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import org.n52.sta.awiingestor.JsonConstants;
@@ -18,5 +19,13 @@ public class Sensor extends EncodedEntity {
     @JsonSetter(JsonConstants.METADATA)
     public void setMetadata(String metadata) {
         this.metadata = metadata;
+    }
+
+
+    @JsonIgnore
+    public Sensor getReference() {
+        Sensor sensor = new Sensor();
+        sensor.setId(this.getId());
+        return sensor;
     }
 }

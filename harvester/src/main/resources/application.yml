@@ -5,11 +5,14 @@ spring:
   main:
     web-environment: false
 
+
 server:
   port: ${random.int(5010,5100)}
 
 logging:
   level:
+    org:
+      n52: TRACE
     reactor:
       netty:
         http:

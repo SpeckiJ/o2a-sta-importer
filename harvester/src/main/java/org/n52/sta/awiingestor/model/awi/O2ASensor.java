@@ -13,43 +13,29 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
                        "id",
-                       "code",
-                       "logicalCode",
                        "sensor",
-                       "unit",
                        "platformId",
-                       "firstDate",
-                       "lastDate",
-                       "lastValue",
-                       "lastQualityFlag",
-                       "source"
                    })
 public class O2ASensor {
 
     @JsonProperty("id")
     private Integer id;
+
     @JsonProperty("code")
     private String code;
-    @JsonProperty("logicalCode")
-    private String logicalCode;
+
     @JsonProperty("sensor")
     private String sensor;
-    @JsonProperty("unit")
-    private String unit;
+
     @JsonProperty("platformId")
     private Integer platformId;
-    @JsonProperty("firstDate")
-    private String firstDate;
-    @JsonProperty("lastDate")
-    private String lastDate;
-    @JsonProperty("lastValue")
-    private Double lastValue;
-    @JsonProperty("lastQualityFlag")
-    private Integer lastQualityFlag;
-    @JsonProperty("source")
-    private String source;
+
+    @JsonProperty("unit")
+    private String unit;
+
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+
     @JsonIgnore
     private AWISensorMetadata metadata;
 
@@ -73,16 +59,6 @@ public class O2ASensor {
         this.code = code;
     }
 
-    @JsonProperty("logicalCode")
-    public String getLogicalCode() {
-        return logicalCode;
-    }
-
-    @JsonProperty("logicalCode")
-    public void setLogicalCode(String logicalCode) {
-        this.logicalCode = logicalCode;
-    }
-
     @JsonProperty("sensor")
     public String getSensor() {
         return sensor;
@@ -91,16 +67,6 @@ public class O2ASensor {
     @JsonProperty("sensor")
     public void setSensor(String sensor) {
         this.sensor = sensor;
-    }
-
-    @JsonProperty("unit")
-    public String getUnit() {
-        return unit;
-    }
-
-    @JsonProperty("unit")
-    public void setUnit(String unit) {
-        this.unit = unit;
     }
 
     @JsonProperty("platformId")
@@ -113,54 +79,14 @@ public class O2ASensor {
         this.platformId = platformId;
     }
 
-    @JsonProperty("firstDate")
-    public String getFirstDate() {
-        return firstDate;
+    @JsonProperty("unit")
+    public String getUnit() {
+        return unit;
     }
 
-    @JsonProperty("firstDate")
-    public void setFirstDate(String firstDate) {
-        this.firstDate = firstDate;
-    }
-
-    @JsonProperty("lastDate")
-    public String getLastDate() {
-        return lastDate;
-    }
-
-    @JsonProperty("lastDate")
-    public void setLastDate(String lastDate) {
-        this.lastDate = lastDate;
-    }
-
-    @JsonProperty("lastValue")
-    public Double getLastValue() {
-        return lastValue;
-    }
-
-    @JsonProperty("lastValue")
-    public void setLastValue(Double lastValue) {
-        this.lastValue = lastValue;
-    }
-
-    @JsonProperty("lastQualityFlag")
-    public Integer getLastQualityFlag() {
-        return lastQualityFlag;
-    }
-
-    @JsonProperty("lastQualityFlag")
-    public void setLastQualityFlag(Integer lastQualityFlag) {
-        this.lastQualityFlag = lastQualityFlag;
-    }
-
-    @JsonProperty("source")
-    public String getSource() {
-        return source;
-    }
-
-    @JsonProperty("source")
-    public void setSource(String source) {
-        this.source = source;
+    @JsonProperty("unit")
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 
     @JsonAnyGetter

@@ -33,12 +33,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.n52.sta.awiingestor.model.sta.Datastream;
 import org.n52.sta.awiingestor.model.sta.FeatureOfInterest;
 import org.n52.sta.awiingestor.model.sta.IdentifiedEntity;
+import org.n52.sta.awiingestor.model.sta.Observation;
 import org.n52.sta.awiingestor.model.sta.ObservedProperty;
 import org.n52.sta.awiingestor.model.sta.Sensor;
 import org.n52.sta.awiingestor.model.sta.Thing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
@@ -55,7 +57,6 @@ public class StaAPI {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StaAPI.class);
 
-    private final ObjectMapper mapper;
     private WebClient client;
 
     public StaAPI(ObjectMapper mapper) {
@@ -71,71 +72,52 @@ public class StaAPI {
 
             })
             .build();
-        this.mapper = mapper;
     }
 
-    public void postThing(Thing thing) {
-        client.post()
-            .uri("/Things")
-            .body(BodyInserters.fromPublisher(Mono.just(thing), Thing.class))
-            .retrieve()
-            .onStatus(e -> e.value() == 409, e -> {
-                LOGGER.trace("skipping thing {} due to conflict!", thing.getName());
-                return Mono.empty();
-            })
-            .bodyToMono(String.class)
-            .block();
+    private void postEntity(String path, Class clazz, IdentifiedEntity entity) {
+        LOGGER.trace(
+            client.post()
+                .uri(path)
+                .body(BodyInserters.fromPublisher(Mono.just(entity), clazz))
+                .retrieve()
+                .onStatus(e -> e.value() == 409, e -> {
+                    LOGGER.trace("skipping {} with id {} due to conflict!",
+                                 clazz.getSimpleName(),
+                                 entity.getId());
+                    return Mono.empty();
+                })
+                .onStatus(HttpStatus::is5xxServerError, e -> {
+                    LOGGER.trace("error occured while persisting {} with id {}",
+                                 clazz.getSimpleName(),
+                                 entity.getId());
+                    return Mono.empty();
+                })
+                .bodyToMono(String.class)
+                .block()
+        );
     }
 
-    public void postDatastream(Datastream datastream) {
-        client.post()
-            .uri("/Datastreams")
-            .body(BodyInserters.fromPublisher(Mono.just(datastream), Datastream.class))
-            .retrieve()
-            .onStatus(e -> e.value() == 409, e -> {
-                LOGGER.trace("skipping datastream {} due to conflict!", datastream.getName());
-                return Mono.empty();
-            })
-            .bodyToMono(String.class)
-            .block();
+    void postThing(Thing thing) {
+        postEntity("/Things", Thing.class, thing);
     }
 
-    public void postSensor(Sensor sensor) {
-        client.post()
-            .uri("/Sensors")
-            .body(BodyInserters.fromPublisher(Mono.just(sensor), Sensor.class))
-            .retrieve()
-            .onStatus(e -> e.value() == 409, e -> {
-                LOGGER.trace("skipping sensor {} due to conflict!", sensor.getName());
-                return Mono.empty();
-            })
-            .bodyToMono(String.class)
-            .block();
+    void postDatastream(Datastream datastream) {
+        postEntity("/Datastreams", Datastream.class, datastream);
     }
 
-    public void postObservedProperty(ObservedProperty obsProp) {
-        String response = client.post()
-            .uri("/ObservedProperties")
-            .body(BodyInserters.fromPublisher(Mono.just(obsProp), ObservedProperty.class))
-            .retrieve()
-            .onStatus(e -> e.value() == 409, e -> {
-                LOGGER.trace("skipping obsprop {} due to conflict!", obsProp.getName());
-                return Mono.empty();
-            })
-            .bodyToMono(String.class)
-            .block();
+    void postSensor(Sensor sensor) {
+        postEntity("/Sensors", Sensor.class, sensor);
     }
 
-    public void postFeatureOfInterest(FeatureOfInterest foi) {
-        String response = client.post()
-            .uri("/FeaturesOfInterest")
-            .body(BodyInserters.fromPublisher(Mono.just(foi), FeatureOfInterest.class))
-            .retrieve()
-            .onStatus(e -> e.value() == 409, e -> {
-                LOGGER.trace("skipping foi {} due to conflict!", foi.getName());
-                return Mono.empty();
-            })
-            .bodyToMono(String.class)
-            .block();
+    void postObservedProperty(ObservedProperty obsProp) {
+        postEntity("/ObservedProperties", ObservedProperty.class, obsProp);
+    }
+
+    void postFeatureOfInterest(FeatureOfInterest foi) {
+        postEntity("/FeaturesOfInterest", FeatureOfInterest.class, foi);
+    }
+
+    void postObservation(Observation observation) {
+        postEntity("/Observations", Observation.class, observation);
     }
 }

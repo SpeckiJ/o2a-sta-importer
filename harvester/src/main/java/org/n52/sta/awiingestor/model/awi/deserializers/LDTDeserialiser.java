@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 52°North Initiative for Geospatial Open Source
+ * Copyright (C) 2018-2021 52°North Initiative for Geospatial Open Source
  * Software GmbH
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -27,11 +27,33 @@
  * Public License for more details.
  */
 
-package org.n52.sta.awiingestor.model.awi;
+package org.n52.sta.awiingestor.model.awi.deserializers;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * @author <a href="mailto:j.speckamp@52north.org">Jan Speckamp</a>
  */
-public class AWIData {
+public class LDTDeserialiser extends JsonDeserializer {
 
+    private final static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+
+    @Override public Object deserialize(JsonParser p, DeserializationContext ctxt)
+        throws IOException, JsonProcessingException {
+        try {
+            return LocalDateTime.ofInstant(df.parse(p.getValueAsString()).toInstant(), ZoneId.systemDefault());
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

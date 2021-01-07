@@ -25,6 +25,15 @@ services:
 #    depends_on:
 #    - sta-postgresdb
 
+  caddy:
+    image: caddy:2
+    ports:
+    - 80:80
+    - 443:443
+    volumes:
+    - caddy-data:/data
+    - ./Caddyfile:/etc/caddy/Caddyfile
+
   sta-postgresdb:
     image: postgis/postgis:12-master
     labels:
@@ -32,6 +41,7 @@ services:
       - "org.52north.context=ufz-2020-R25244"
       - "org.52north.end-of-life=2021-12-31T00:00:00Z"
     restart: on-failure
+    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c max_connections=200
     environment:
       - POSTGRES_DB=sta
       - POSTGRES_USER=postgres
@@ -50,78 +60,90 @@ services:
       - "org.52north.context=ufz-2020-R25244"
       - "org.52north.end-of-life=2021-12-31T00:00:00Z"
     restart: on-failure
+    environment:
+      GF_INSTALL_PLUGINS: grafana-worldmap-panel,grafana-clock-panel,briangann-datatable-panel,https://github.com/panodata/grafana-map-panel/releases/download/0.15.0/grafana-map-panel-0.15.0.zip;grafana-map-panel,marcusolsson-dynamictext-panel
+#      GF_SERVER_ROOT_URL: "http://localhost/dashboard/"
+#      GF_SERVE_FROM_SUB_PATH: "true"
     ports:
       - 3000:3000
-
-  elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
-    labels:
-      - "org.52north.contact=j.speckamp+ufz-2020-demoserver@52north.org"
-      - "org.52north.context=ufz-2020-R25244"
-      - "org.52north.end-of-life=2021-12-31T00:00:00Z"
-
     volumes:
-      - elastic-data:/usr/share/elasticsearch/data
-    environment:
-      discovery.type: single-node
-    ports:
-      - 9200:9200
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    restart: unless-stopped
-    healthcheck:
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      test: |
-        status=$$(curl -f -s localhost:9200/_cat/health?h=status) && [ "$$status" == "green" -o "$$status" == "yellow" ] && exit 0 || exit 1
+      - /home/specki/git/sta-grafana:/var/lib/grafana/plugins/sta-grafana
+      - /home/specki/git/alexandra-trackmap-panel:/var/lib/grafana/plugins/alexandra-trackmap-panel
 
-  kibana:
-    image: docker.elastic.co/kibana/kibana:7.10.1
-    labels:
-      - "org.52north.contact=j.speckamp+ufz-2020-demoserver@52north.org"
-      - "org.52north.context=ufz-2020-R25244"
-      - "org.52north.end-of-life=2021-12-31T00:00:00Z"
-    environment:
-      ELASTICSEARCH_HOSTS: http://elastic:9200
-    ports:
-      - 5601:5601
-    depends_on:
-      - elastic
-    healthcheck:
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      test: curl -sf http://localhost:5601/api/status
-
-  filebeat:
-    image: docker.elastic.co/beats/filebeat:7.10.1
-    labels:
-      - "org.52north.contact=j.speckamp+ufz-2020-demoserver@52north.org"
-      - "org.52north.context=ufz-2020-R25244"
-      - "org.52north.end-of-life=2021-12-31T00:00:00Z"
-    user: root
-    environment:
-      ELASTICSEARCH_HOSTS: http://elastic:9200
-    volumes:
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
-      - ./ilm.json:/usr/share/filebeat/ilm.json
-    command: ["-strict.perms=false"]
-    depends_on:
-      - elastic
-    healthcheck:
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      test: filebeat test output
-    restart: unless-stopped
+#  elastic:
+#    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
+#    labels:
+#      - "org.52north.contact=j.speckamp+ufz-2020-demoserver@52north.org"
+#      - "org.52north.context=ufz-2020-R25244"
+#      - "org.52north.end-of-life=2021-12-31T00:00:00Z"
+#
+#    volumes:
+#      - elastic-data:/usr/share/elasticsearch/data
+#    environment:
+#      discovery.type: single-node
+#    ports:
+#      - 9200:9200
+#    ulimits:
+#      memlock:
+#        soft: -1
+#        hard: -1
+#    restart: unless-stopped
+#    healthcheck:
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#      test: |
+#        status=$$(curl -f -s localhost:9200/_cat/health?h=status) && [ "$$status" == "green" -o "$$status" == "yellow" ] && exit 0 || exit 1
+#
+#  kibana:
+#    image: docker.elastic.co/kibana/kibana:7.10.1
+#    labels:
+#      - "org.52north.contact=j.speckamp+ufz-2020-demoserver@52north.org"
+#      - "org.52north.context=ufz-2020-R25244"
+#      - "org.52north.end-of-life=2021-12-31T00:00:00Z"
+#    environment:
+#      ELASTICSEARCH_HOSTS: http://elastic:9200
+#    ports:
+#      - 5601:5601
+#    depends_on:
+#      - elastic
+#    healthcheck:
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#      test: curl -sf http://localhost:5601/api/status
+#
+#  filebeat:
+#    image: docker.elastic.co/beats/filebeat:7.10.1
+#    labels:
+#      - "org.52north.contact=j.speckamp+ufz-2020-demoserver@52north.org"
+#      - "org.52north.context=ufz-2020-R25244"
+#      - "org.52north.end-of-life=2021-12-31T00:00:00Z"
+#    user: root
+#    environment:
+#      ELASTICSEARCH_HOSTS: http://elastic:9200
+#    volumes:
+#      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+#      - /var/run/docker.sock:/var/run/docker.sock
+#      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+#      - ./ilm.json:/usr/share/filebeat/ilm.json
+#    command: ["-strict.perms=false"]
+#    depends_on:
+#      - elastic
+#    healthcheck:
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#      test: filebeat test output
+#    restart: unless-stopped
 
 volumes:
   elastic-data:
     labels:
       - "org.n52.backup=false"
     driver: local
+  caddy-data:
+    labels:
+      - "org.n52.backup=false"
+    driver: local
+

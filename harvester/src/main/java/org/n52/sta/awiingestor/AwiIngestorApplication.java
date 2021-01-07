@@ -2,6 +2,7 @@ package org.n52.sta.awiingestor;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
@@ -14,6 +15,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
@@ -27,13 +29,18 @@ public class AwiIngestorApplication {
 
     @Bean
     public ObjectMapper objectMapper() {
+
+        SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
+
         //TODO: afterburner
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JtsModule());
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
-        return objectMapper;
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setDateFormat(df);
+        mapper.registerModule(new JtsModule());
+        mapper.registerModule(new JavaTimeModule());
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return mapper;
     }
 
     @Bean
@@ -50,7 +57,7 @@ public class AwiIngestorApplication {
         return TriggerBuilder.newTrigger().forJob(job)
             .withIdentity("Qrtz_Trigger")
             .withDescription("Main Trigger")
-            .withSchedule(simpleSchedule().repeatForever().withIntervalInHours(1))
+            .withSchedule(simpleSchedule().repeatForever().withIntervalInHours(100))
             .build();
     }
 

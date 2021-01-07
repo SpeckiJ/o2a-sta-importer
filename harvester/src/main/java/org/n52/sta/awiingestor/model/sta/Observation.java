@@ -2,13 +2,12 @@ package org.n52.sta.awiingestor.model.sta;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.n52.sta.awiingestor.JsonConstants;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 
-public class Observation {
+public class Observation extends IdentifiedEntity {
 
     private Object result;
     private OffsetDateTime phenomenonTime;
@@ -58,7 +57,6 @@ public class Observation {
     }
 
     @JsonGetter(JsonConstants.DATASTREAM)
-    @JsonSerialize(as = IdentifiedEntity.class)
     public Datastream getDatastream() {
         return datastream;
     }
@@ -69,7 +67,6 @@ public class Observation {
     }
 
     @JsonGetter(JsonConstants.FEATURE_OF_INTEREST)
-    @JsonSerialize(as = IdentifiedEntity.class)
     public FeatureOfInterest getFeatureOfInterest() {
         return featureOfInterest;
     }
@@ -77,6 +74,12 @@ public class Observation {
     @JsonSetter(JsonConstants.FEATURE_OF_INTEREST)
     public void setFeatureOfInterest(FeatureOfInterest featureOfInterest) {
         this.featureOfInterest = featureOfInterest;
+    }
+
+    @Override public boolean equals(Object o) {
+        return super.equals(o)
+            && o instanceof Observation
+            && o == this;
     }
 
     @Override

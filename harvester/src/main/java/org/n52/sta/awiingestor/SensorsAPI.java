@@ -29,6 +29,7 @@
 
 package org.n52.sta.awiingestor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import io.github.resilience4j.reactor.ratelimiter.operator.RateLimiterOperator;
@@ -39,8 +40,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.http.codec.json.Jackson2JsonDecoder;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.TcpClient;
@@ -49,6 +53,7 @@ import reactor.util.retry.Retry;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -68,7 +73,7 @@ public class SensorsAPI {
     private HashMap<String, AWISensorOutput> sensorOutputCache = new HashMap<>();
     private HashMap<String, AWISensorDetailedItem> sensorDetailedItemCache = new HashMap<>();
 
-    public SensorsAPI(RateLimiterRegistry rateLimiterRegistry) {
+    public SensorsAPI(ObjectMapper mapper, RateLimiterRegistry rateLimiterRegistry) {
         this.rateLimiterRegistry = rateLimiterRegistry;
         ConnectionProvider provider = ConnectionProvider.builder("builder")
             .maxConnections(1)
@@ -80,6 +85,14 @@ public class SensorsAPI {
             .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
             .codecs(clientCodecConfigurer -> clientCodecConfigurer.defaultCodecs()
                 .maxInMemorySize(16 * 1024 * 1024))
+            .codecs(clientCodecConfigurer -> {
+                clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
+                clientCodecConfigurer.defaultCodecs().jackson2JsonDecoder(
+                    new Jackson2JsonDecoder(mapper, MediaType.APPLICATION_JSON));
+                clientCodecConfigurer.defaultCodecs().jackson2JsonEncoder(
+                    new Jackson2JsonEncoder(mapper, MediaType.APPLICATION_JSON));
+
+            })
             .clientConnector(new ReactorClientHttpConnector(HttpClient.from(tcpClient)))
             .build();
     }
@@ -118,11 +131,15 @@ public class SensorsAPI {
             .get()
             .uri("/item/getDetailedItem/{id}?includeChildren=true", sensorLinkId)
             .retrieve()
+            .onStatus(status -> !status.is2xxSuccessful(), s -> {
+                System.out.println(s.rawStatusCode());
+                return Mono.empty();
+            })
             .bodyToMono(AWISensorDetailedItem.class)
             .onErrorContinue((err, x) -> LOGGER.error("Could not decode AWISensorDetailedItem!"))
             .transformDeferred(RateLimiterOperator.of(
                 rateLimiterRegistry.rateLimiter(APIConfig.SENSORS_API_RATELIMIT_NAME)))
-            .retryWhen(Retry.backoff(5, Duration.ofSeconds(2)))
+            // .retryWhen(Retry.backoff(5, Duration.ofSeconds(2)))
             .block());
     }
 

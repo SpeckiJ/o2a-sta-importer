@@ -40,6 +40,7 @@ import org.n52.sta.awiingestor.model.awi.O2ASensor;
 import org.n52.sta.awiingestor.model.sta.Datastream;
 import org.n52.sta.awiingestor.model.sta.Feature;
 import org.n52.sta.awiingestor.model.sta.FeatureOfInterest;
+import org.n52.sta.awiingestor.model.sta.Observation;
 import org.n52.sta.awiingestor.model.sta.ObservedProperty;
 import org.n52.sta.awiingestor.model.sta.Sensor;
 import org.n52.sta.awiingestor.model.sta.Thing;
@@ -47,8 +48,12 @@ import org.n52.sta.awiingestor.model.sta.UnitOfMeasurement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author <a href="mailto:j.speckamp@52north.org">Jan Speckamp</a>
@@ -58,37 +63,37 @@ public class STATransformer {
     private static final Logger LOGGER = LoggerFactory.getLogger(STATransformer.class);
     private static final String OBS_TYPE_MEASUREMENT =
         "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement";
+    private static final GeometryFactory geometryFactory = new GeometryFactory();
 
     static Thing toSTAThing(O2APlatform o2APlatform) {
         Thing staThing = new Thing();
         staThing.setId(String.valueOf(o2APlatform.getId()));
         staThing.setName(o2APlatform.getPlatform() + " - " + o2APlatform.getCode());
         staThing.setDescription(o2APlatform.getPlatform() + " - " + o2APlatform.getType());
-
-        Map<String, Object> properties = new HashMap<>();
-        staThing.setProperties(properties);
-
         return staThing;
     }
 
     static Sensor toSTASensor(O2ASensor o2ASensor) {
         Sensor staSensor = new Sensor();
-        staSensor.setId(o2ASensor.getSensor());
-        staSensor.setName(o2ASensor.getSensor());
-        staSensor.setDescription(o2ASensor.getSensor());
+        String sensorName = o2ASensor.getSensor().substring(0, o2ASensor.getSensor().lastIndexOf(":"));
+        staSensor.setId(sensorName);
+        staSensor.setName(sensorName);
+        staSensor.setDescription(sensorName);
         staSensor.setProperties(o2ASensor.getAdditionalProperties());
-        staSensor.setMetadata(o2ASensor.getSensor());
+        staSensor.setMetadata(sensorName);
         staSensor.setEncodingType("http://www.opengis.net/doc/IS/SensorML/2.0");
 
         return staSensor;
     }
 
-    static Datastream toSTADatastream(AWIDataset o2ADataset) {
+    static Datastream toSTADatastream(String sensorId, AWIDataset o2ADataset) {
         Datastream staDatastream = new Datastream();
+        staDatastream.setId(String.valueOf(o2ADataset.getId()) + " - " + sensorId);
         staDatastream.setName(String.valueOf(o2ADataset.getId()));
         staDatastream.setDescription("Id:" + o2ADataset.getId());
         staDatastream.setObservationType(OBS_TYPE_MEASUREMENT);
         staDatastream.setUnitOfMeasurement(new UnitOfMeasurement());
+        staDatastream.setProperties(o2ADataset.getAdditionalProperties());
         return staDatastream;
     }
 
@@ -96,48 +101,49 @@ public class STATransformer {
         ObservedProperty obsProp = new ObservedProperty();
 
         obsProp.setId(awiSensorOutput.getShortname());
-        String description = awiSensorOutput.getSensorOutputType().getDescription();
-        obsProp.setDescription(description.equals("") ? "default_description" : description);
-        obsProp.setName(awiSensorOutput.getSensorOutputType().getGeneralName());
+        obsProp.setDescription(awiSensorOutput.getName());
+        obsProp.setName(awiSensorOutput.getName());
         obsProp.setDefinition(awiSensorOutput.getShortname() + awiSensorOutput.getSensorOutputType().getSystemName());
 
         Map<String, Object> properties = new HashMap<>();
-        properties.put("lastModified", awiSensorOutput.getSensorOutputType().getLastModified());
-        properties.put("vocabularyID", awiSensorOutput.getSensorOutputType().getVocabularyID());
-        properties.put("vocabularyValue", awiSensorOutput.getSensorOutputType().getVocableValue());
-        properties.put("shortname", awiSensorOutput.getShortname());
+        properties.put("sensorOutputType", awiSensorOutput.getSensorOutputType());
+        properties.put("unitOfMeasurement", awiSensorOutput.getUnitOfMeasurement());
         properties.put("sourceUrl", awiSensorOutput.getSourceUrl());
 
         obsProp.setProperties(properties);
         return obsProp;
     }
 
-    static FeatureOfInterest toSTAFeatureOfInterest(Event event) {
-        try {
-            if (event.getEventType()
-                .getVocableValue()
-                .equals("http://vocab.nerc.ac.uk/collection/W03/current/W030002/")
-                && event.getLatitude() != null
-                && event.getLongitude() != null
-            ) {
-                FeatureOfInterest foi = new FeatureOfInterest();
-                Feature feature = new Feature();
-                GeometryFactory geometryFactory = new GeometryFactory();
+    static Observation toSTAObservation(List<String> datum, Datastream datastream, List<FeatureOfInterest> events) {
+        LocalDateTime timestamp = LocalDateTime.parse(datum.get(0));
+        String value = datum.get(1);
+        FeatureOfInterest matchingFOI = null;
 
-                Point point = geometryFactory.createPoint(new Coordinate(event.getLatitude(), event.getLongitude()));
-                feature.setGeometry(point);
-                foi.setName(event.getLabel());
-                foi.setDescription("Desc:" + event.getDescription());
-                foi.setEncodingType("application/vnd.geo+json");
-                // foi.setProperties(mapper.convertValue(event, ObjectNode.class));
-                foi.setFeature(feature);
-                return foi;
+        // Search for matching event to get foi
+        for (FeatureOfInterest event : events) {
+            if (timestamp.compareTo((LocalDateTime) event.getProperties().get("startDate")) >= 0
+                && timestamp.compareTo((LocalDateTime) event.getProperties().get("endDate")) <= 0) {
+                matchingFOI = event;
+                break;
             }
-            return null;
-        } catch (Exception e) {
-            //e.printStackTrace();
-            LOGGER.error("Skipped parsing event due to error: " + event.getUuid() + e.getMessage());
-            return null;
         }
+        Observation obs = new Observation();
+        FeatureOfInterest foiRef = new FeatureOfInterest();
+        if (matchingFOI == null) {
+            // LOGGER.debug("Could not find matching event. using empty dummy foi");
+            foiRef.setId("unknown");
+        } else {
+            foiRef.setId(matchingFOI.getId());
+        }
+        obs.setFeatureOfInterest(foiRef);
+
+        obs.setResult(value);
+        //TODO: check if this is correct
+        obs.setPhenomenonTime(timestamp.atOffset(ZoneOffset.UTC));
+
+        Datastream datastreamRef = new Datastream();
+        datastreamRef.setId(datastream.getId());
+        obs.setDatastream(datastreamRef);
+        return obs;
     }
 }

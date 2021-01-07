@@ -7,7 +7,7 @@ import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IdentifiedEntity implements Intentified {
+public abstract class IdentifiedEntity implements Intentified {
     private String id;
 
     public IdentifiedEntity() {}

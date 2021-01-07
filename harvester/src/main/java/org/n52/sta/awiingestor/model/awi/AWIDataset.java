@@ -29,35 +29,35 @@
 
 package org.n52.sta.awiingestor.model.awi;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author <a href="mailto:j.speckamp@52north.org">Jan Speckamp</a>
  */
 public class AWIDataset {
 
     public int id;
-    public String insertDate;
-    public String minDate;
-    public String maxDate;
-    public String username;
+
+    @JsonIgnore
+    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     public int getId() {
         return id;
     }
 
-    public String getInsertDate() {
-        return insertDate;
+    @JsonAnyGetter
+    public Map<String, Object> getAdditionalProperties() {
+        return this.additionalProperties;
     }
 
-    public String getMinDate() {
-        return minDate;
-    }
-
-    public String getMaxDate() {
-        return maxDate;
-    }
-
-    public String getUsername() {
-        return username;
+    @JsonAnySetter
+    public void setAdditionalProperty(String name, Object value) {
+        this.additionalProperties.put(name, value);
     }
 
 }

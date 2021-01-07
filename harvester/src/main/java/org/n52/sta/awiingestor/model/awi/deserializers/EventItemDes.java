@@ -52,6 +52,7 @@ public class EventItemDes extends JsonDeserializer<EventItem> {
 
     @Override public EventItem deserialize(JsonParser p, DeserializationContext ctxt)
         throws IOException, JsonProcessingException {
+        /*
         if (p.currentToken().equals(JsonToken.START_OBJECT)) {
             EventItemImpl EventItem = p.readValueAs(EventItemImpl.class);
             cache.put(EventItem.getUuid(), EventItem);
@@ -63,5 +64,7 @@ public class EventItemDes extends JsonDeserializer<EventItem> {
                 return null;
             }
         }
+        */
+        return p.readValueAs(EventItemImpl.class);
     }
 }

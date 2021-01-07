@@ -33,9 +33,9 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.n52.sta.awiingestor.model.awi.deserializers.EventDes;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -49,13 +49,13 @@ public interface Event {
 
     @JsonProperty("@uuid") void setUuid(String uuid);
 
-    @JsonProperty("startDate") String getStartDate();
+    @JsonProperty("startDate") LocalDateTime getStartDate();
 
-    @JsonProperty("startDate") void setStartDate(String startDate);
+    @JsonProperty("startDate") void setStartDate(LocalDateTime startDate);
 
-    @JsonProperty("endDate") String getEndDate();
+    @JsonProperty("endDate") LocalDateTime getEndDate();
 
-    @JsonProperty("endDate") void setEndDate(String endDate);
+    @JsonProperty("endDate") void setEndDate(LocalDateTime endDate);
 
     @JsonProperty("label") String getLabel();
 

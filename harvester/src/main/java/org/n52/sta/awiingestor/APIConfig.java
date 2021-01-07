@@ -44,6 +44,5 @@ public class APIConfig {
     static final String SENSORS_API_ROOT = "https://sensor.awi.de/rest/sensors";
     static final String SENSORS_API_RATELIMIT_NAME = "sensorsAPI-ratelimit";
 
-    static final String STA_API_ROOT = "http://localhost:8081/v1.1/";
-
+    static final String STA_API_ROOT = "http://207.154.210.84:8081/v1.1/";
 }

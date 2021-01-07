@@ -2,12 +2,16 @@ package org.n52.sta.awiingestor.model.awi;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.n52.sta.awiingestor.model.awi.deserializers.LDTDeserialiser;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,16 +32,25 @@ import java.util.Map;
                        "id"
                    })
 @JsonDeserialize
+@JsonIdentityInfo(
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "@uuid")
 public class EventImpl implements Event {
 
     @JsonProperty("@uuid")
     private String uuid;
+
+    @JsonDeserialize(using = LDTDeserialiser.class)
     @JsonProperty("startDate")
-    private String startDate;
+    private LocalDateTime startDate;
+
+    @JsonDeserialize(using = LDTDeserialiser.class)
     @JsonProperty("endDate")
-    private String endDate;
+    private LocalDateTime endDate;
+
     @JsonProperty("label")
     private String label;
+
     @JsonProperty("description")
     private String description;
     @JsonProperty("eventType")
@@ -68,22 +81,22 @@ public class EventImpl implements Event {
     }
 
     @Override @JsonProperty("startDate")
-    public String getStartDate() {
+    public LocalDateTime getStartDate() {
         return startDate;
     }
 
     @Override @JsonProperty("startDate")
-    public void setStartDate(String startDate) {
+    public void setStartDate(LocalDateTime startDate) {
         this.startDate = startDate;
     }
 
     @Override @JsonProperty("endDate")
-    public String getEndDate() {
+    public LocalDateTime getEndDate() {
         return endDate;
     }
 
     @Override @JsonProperty("endDate")
-    public void setEndDate(String endDate) {
+    public void setEndDate(LocalDateTime endDate) {
         this.endDate = endDate;
     }
 

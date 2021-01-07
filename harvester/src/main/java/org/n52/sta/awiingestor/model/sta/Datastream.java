@@ -2,22 +2,19 @@ package org.n52.sta.awiingestor.model.sta;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.locationtech.jts.geom.Geometry;
 import org.n52.sta.awiingestor.JsonConstants;
-
-import java.awt.Polygon;
 
 public class Datastream extends DescribedEntity {
 
     private UnitOfMeasurement unitOfMeasurement;
     private String observationType;
-    private Polygon observedArea;
+    private Geometry observedArea;
     private ObservedProperty observedProperty;
     private Sensor sensor;
     private Thing thing;
 
     @JsonGetter(JsonConstants.THING)
-    @JsonSerialize(as = IdentifiedEntity.class)
     public Thing getThing() {
         return thing;
     }
@@ -48,17 +45,16 @@ public class Datastream extends DescribedEntity {
     }
 
     @JsonGetter(JsonConstants.OBSERVED_AREA)
-    public Polygon getObservedArea() {
+    public Geometry getObservedArea() {
         return observedArea;
     }
 
     @JsonSetter(JsonConstants.OBSERVED_AREA)
-    public void setObservedArea(Polygon observedArea) {
+    public void setObservedArea(Geometry observedArea) {
         this.observedArea = observedArea;
     }
 
     @JsonGetter(JsonConstants.OBSERVED_PROPERTY)
-    @JsonSerialize(as = IdentifiedEntity.class)
     public ObservedProperty getObservedProperty() {
         return observedProperty;
     }
@@ -69,7 +65,6 @@ public class Datastream extends DescribedEntity {
     }
 
     @JsonGetter(JsonConstants.SENSOR)
-    @JsonSerialize(as = IdentifiedEntity.class)
     public Sensor getSensor() {
         return sensor;
     }
